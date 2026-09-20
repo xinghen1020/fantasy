@@ -1,0 +1,19 @@
+# 01: 3D 场景迁移——走跑 + 俯视角相机
+
+**What to build:** 项目从 2D 配置转为 3D 场景的基座：玩家角色（CharacterBody3D）复用现有 3D 模型与走跑动画，WASD 八方向走动与跑动（shift），倾斜俯视角跟随相机（固定俯角、不旋转），纯色地面。完成后能操控角色在地面上自由走跑，打通模型/动画/输入/相机的整条管线。
+
+**Blocked by:** None (can start immediately)
+
+**Status:** ready-for-human
+
+- [x] 玩家以 CharacterBody3D 在水平面（XZ 平面坐标）移动，走/跑两档速度，动画随速度与朝向正确播放
+- [x] 相机以约 50–60° 俯角跟随玩家，不旋转
+- [x] 场景含纯色地面（坐标参照物），无装饰
+- [x] 集成测试：模拟移动输入后玩家位置发生变化
+- [x] 现有 2D 时代的 player 脚本与场景被替换为 3D 版本，项目主场景可运行
+
+## Comments
+
+- 实现完成（tests/test_player_movement.gd 4 项全部通过，游戏内截图验证移动/相机跟随）。决策：走跑动画取自已接线骨架的 `standard` 库（`standard/Idle` / `Walk` / `Sprint`），未使用二进制库 run.res / walk.res（无法确认为本骨架重定向）。
+- 玩家脚本 `@tool` + `Engine.is_editor_hint()` 守卫，移动逻辑入口 `tick()` 供集成测试手动推进（编辑器内测试套件无法等待真实物理帧）。编辑器里 `move_and_slide` 的实际位移随编辑器帧率浮动，测试在速度层面断言两档速度，位移只断言"发生了变化"。
+- 待人工验证：走跑动画观感、相机跟随顺滑度（spec 规定人工项）。
