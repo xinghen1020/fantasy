@@ -83,3 +83,84 @@ func test_unknown_move_rejected_in_free() -> void:
 	var m := CombatStateMachine.new()
 	assert_false(m.start_attack("not_a_move"), "未知招式应被拒绝")
 	assert_eq(m.phase, CombatStateMachine.Phase.FREE, "拒绝后应保持自由")
+
+
+func _params(move_name: String) -> Dictionary:
+	return MoveTable.MOVES[move_name]
+
+
+## 推进到当前招式的派生窗口（后摇段）
+func _drive_to_recovery(m: CombatStateMachine) -> void:
+	var p := _params(m.current_move_name)
+	_advance(m, p["windup"] + p["active"] + 0.02)
+
+
+func test_combo_chains_by_table_and_ends_free() -> void:
+	var m := _start(CombatStateMachine.new())
+	_drive_to_recovery(m)
+	assert_eq(m.phase, CombatStateMachine.Phase.RECOVERY, "应进入派生窗口")
+	m.notify_light_pressed()
+	assert_eq(m.current_move_name, MoveTable.LIGHT_ATTACK_2, "窗口内派生应接到第2段")
+	assert_eq(m.phase, CombatStateMachine.Phase.WINDUP, "派生应立即进入第2段前摇")
+	_drive_to_recovery(m)
+	m.notify_light_pressed()
+	assert_eq(m.current_move_name, MoveTable.LIGHT_ATTACK_3, "第2段派生应接到第3段")
+	_drive_to_recovery(m)
+	m.notify_light_pressed()
+	assert_eq(m.current_move_name, MoveTable.LIGHT_ATTACK_3, "第3段后轻攻击派生应无效果（连段到头）")
+	assert_eq(m.phase, CombatStateMachine.Phase.RECOVERY, "无派生时窗口保持")
+	_advance(m, _params(MoveTable.LIGHT_ATTACK_3)["recovery"] + 0.02)
+	assert_eq(m.phase, CombatStateMachine.Phase.FREE, "第3段结束后应回到自由")
+
+
+func test_buffer_stored_outside_window_consumed_at_open() -> void:
+	var m := _start(CombatStateMachine.new())
+	_advance(m, 0.10)  # 前摇中段
+	m.notify_light_pressed()
+	assert_eq(m.current_move_name, MoveTable.LIGHT_ATTACK_1, "窗口外输入不应立即生效")
+	assert_eq(m.phase, CombatStateMachine.Phase.WINDUP, "缓冲不改变当前阶段")
+	_advance(m, _move_params()["windup"] - 0.10 + _move_params()["active"] + 0.01)
+	assert_eq(m.current_move_name, MoveTable.LIGHT_ATTACK_2, "缓冲应在窗口开启瞬间消费")
+	assert_eq(m.phase, CombatStateMachine.Phase.WINDUP, "消费后立即起手下一招")
+
+
+func test_direct_input_during_window_derives_immediately() -> void:
+	var m := _start(CombatStateMachine.new())
+	_drive_to_recovery(m)
+	m.notify_light_pressed()
+	assert_eq(m.phase, CombatStateMachine.Phase.WINDUP, "窗口内直按应立即派生，不经缓冲延迟")
+
+
+func test_buffer_discarded_when_no_derivation() -> void:
+	var m := _start(CombatStateMachine.new())
+	# 用窗口内直按推到第3段
+	_drive_to_recovery(m)
+	m.notify_light_pressed()
+	_drive_to_recovery(m)
+	m.notify_light_pressed()
+	assert_eq(m.current_move_name, MoveTable.LIGHT_ATTACK_3)
+	_advance(m, 0.10)
+	m.notify_light_pressed()  # 第3段前摇中连打
+	_advance(m, _params(MoveTable.LIGHT_ATTACK_3)["windup"] - 0.10 + _params(MoveTable.LIGHT_ATTACK_3)["active"] + 0.01)
+	assert_eq(m.current_move_name, MoveTable.LIGHT_ATTACK_3, "无派生时缓冲应被弃置，不循环回第1段")
+	assert_eq(m.phase, CombatStateMachine.Phase.RECOVERY)
+
+
+func test_buffer_single_slot_overwrite() -> void:
+	var m := _start(CombatStateMachine.new())
+	_advance(m, 0.05)
+	m.notify_light_pressed()
+	m.notify_light_pressed()
+	m.notify_light_pressed()  # 密集连打
+	_advance(m, _move_params()["windup"] - 0.05 + _move_params()["active"] + 0.01)
+	assert_eq(m.current_move_name, MoveTable.LIGHT_ATTACK_2, "单槽缓冲：窗口消费一次")
+	_advance(m, _params(MoveTable.LIGHT_ATTACK_2)["windup"] + _params(MoveTable.LIGHT_ATTACK_2)["active"] + _params(MoveTable.LIGHT_ATTACK_2)["recovery"] + 0.02)
+	assert_eq(m.phase, CombatStateMachine.Phase.FREE, "多余点按不应排队，第2段后无输入则归自由")
+
+
+func test_recovery_animation_from_table() -> void:
+	var m := _start(CombatStateMachine.new())
+	assert_eq(m.current_animation(), _move_params()["animation"], "前摇段应播挥砍动画")
+	_advance(m, _move_params()["windup"] + _move_params()["active"] + 0.02)
+	assert_eq(m.current_animation(), _move_params()["recovery_animation"], "后摇段应播数据表配置的收招动画")
+	assert_eq(m.current_move_name, MoveTable.LIGHT_ATTACK_1, "后摇仍属同一招")

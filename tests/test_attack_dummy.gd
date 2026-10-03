@@ -144,3 +144,30 @@ func test_attack_animation_plays_once_per_swing() -> void:
 			plays += 1
 		was_playing = playing
 	assert_eq(plays, 1, "招式动画（0.43s）短于整招（0.82s），一次点击只应播放一遍，不可重播第二遍挥砍")
+
+
+func test_three_hit_combo_hits_three_times() -> void:
+	_spawn_arena()
+	_face_dummy()
+	var player := _player()
+	var hit_count := [0]
+	_dummy().damaged.connect(func(_amount: int, _remaining: int) -> void:
+		hit_count[0] += 1)
+	var swing_anims: Array = []
+	var guard := 0
+	player.request_light_attack()  # 起手第1段
+	# 连打段（前摇/判定段每帧点按）触发缓冲，窗口开启自动接下一招
+	while hit_count[0] < 3 and guard < 500:
+		guard += 1
+		player.tick(TICK)
+		player.update_animation()
+		var phase: int = player.machine.phase
+		if phase == CombatStateMachine.Phase.ACTIVE:
+			var anim: String = player.machine.current_animation()
+			if not swing_anims.has(anim):
+				swing_anims.append(anim)
+		if phase == CombatStateMachine.Phase.WINDUP or phase == CombatStateMachine.Phase.ACTIVE:
+			player.request_light_attack()
+	assert_true(guard < 500, "三段连段应在有限帧内完成（实际 %d 帧）" % guard)
+	assert_eq(hit_count[0], 3, "连续点按应打出三段连段，每段命中一次")
+	assert_eq(swing_anims.size(), 3, "三段应使用三个不同的招式动画")

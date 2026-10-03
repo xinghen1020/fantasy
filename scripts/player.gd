@@ -47,9 +47,10 @@ func _physics_process(delta: float) -> void:
 	update_animation()
 
 
-## 外部入口：发起轻攻击。游戏中由 attack 输入调用，集成测试直接调用。
+## 外部入口：轻攻击输入。游戏中由 attack 输入调用，集成测试直接调用。
+## 派生/缓冲规则在状态机内（票03）：自由态起手、窗口内派生、窗口外缓冲。
 func request_light_attack() -> void:
-	machine.start_attack(MoveTable.LIGHT_ATTACK_1)
+	machine.notify_light_pressed()
 
 
 ## 推进一帧：动作状态机 → 移动/前冲 → 命中结算。
