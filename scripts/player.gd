@@ -81,6 +81,11 @@ func update_animation() -> void:
 		anim = machine.current_animation()
 	elif velocity.length_squared() > 0.01:
 		anim = ANIM_SPRINT if velocity.length() > WALK_SPEED + ANIM_SPEED_EPSILON else ANIM_WALK
+	elif _anim_intent != "" and animation_player.current_animation == _anim_intent \
+			and MoveTable.is_recovery_animation(_anim_intent):
+		# 自由且无移动输入：收招动画尾奏让它播完再回 Idle；有移动输入立即切走。
+		# 挥砍动画不在此列——播完定格是票02 修掉的旧 bug，不能从这里回来。
+		anim = _anim_intent
 	if anim == "":
 		return
 	if _anim_intent == anim:

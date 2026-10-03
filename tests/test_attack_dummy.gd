@@ -171,3 +171,21 @@ func test_three_hit_combo_hits_three_times() -> void:
 	assert_true(guard < 500, "三段连段应在有限帧内完成（实际 %d 帧）" % guard)
 	assert_eq(hit_count[0], 3, "连续点按应打出三段连段，每段命中一次")
 	assert_eq(swing_anims.size(), 3, "三段应使用三个不同的招式动画")
+
+
+func test_recovery_anim_plays_out_before_idle() -> void:
+	_spawn_arena()
+	var player := _player()
+	# 背对木桩挥空且不再输入，推完整招（含后摇）
+	player.global_position = Vector3(1.1, 0, 0)
+	player.rotation.y = atan2(-1.0, 0.0)
+	player.request_light_attack()
+	var p: Dictionary = MoveTable.MOVES[MoveTable.LIGHT_ATTACK_1]
+	var move_frames: int = int(ceil((p["windup"] + p["active"] + p["recovery"]) / TICK))
+	for i in move_frames + 2:
+		player.tick(TICK)
+		player.update_animation()
+	assert_eq(player.machine.phase, CombatStateMachine.Phase.FREE, "整招应已结束")
+	assert_eq(player.animation_player.current_animation, p["recovery_animation"], "回自由后收招动画应作尾奏继续播，不应立即切 Idle")
+	# 注：不测"尾奏播完回 Idle"——编辑器测试里动画按真实时钟播放，手动 tick 不推进
+	# AnimationPlayer，完成时刻不可确定断言；实时行为由人工试玩覆盖。

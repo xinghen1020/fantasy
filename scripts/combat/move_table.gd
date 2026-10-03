@@ -53,3 +53,11 @@ const MOVES := {
 
 static func get_move(move_name: String) -> Dictionary:
 	return MOVES.get(move_name, {})
+
+
+## 该动画名是否为某招的收招动画（尾奏判定用）
+static func is_recovery_animation(anim_name: String) -> bool:
+	for move in MOVES.values():
+		if move.get("recovery_animation", "") == anim_name:
+			return true
+	return false
