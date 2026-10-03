@@ -36,12 +36,14 @@ const MOVES := {
 		"next": {"light": LIGHT_ATTACK_3},
 	},
 	LIGHT_ATTACK_3: {
-		"animation": "standard_2/Sword_Regular_C",
-		# 库内 C 无独立 _Rec，暂复用 A 的收招，观感不对再换
+		# 库内 Sword_Regular_C（2.0s）实为"助跑→跃起→摔倒"剪辑，不是挥砍，弃用；
+		# 换用同族节奏的单发打击 Melee_Hook（0.47s，对比 A 0.43 / B 0.53）
+		"animation": "standard_2/Melee_Hook",
+		# 库内 Hook 无独立 _Rec，暂复用 A 的收招
 		"recovery_animation": "standard_2/Sword_Regular_A_Rec",
-		"windup": 0.3,
+		"windup": 0.25,
 		"active": 0.12,
-		"recovery": 0.6,
+		"recovery": 0.5,
 		"damage": 16,
 		"lunge_speed": 2.0,
 		"next": {},
