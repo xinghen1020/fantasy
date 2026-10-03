@@ -57,8 +57,15 @@ func request_light_attack() -> void:
 func tick(delta: float) -> void:
 	machine.tick(delta)
 	if machine.is_locked():
-		# 攻击期间锁死走跑，位移由招式前冲沿面朝方向提供（用户故事 9）
-		velocity = global_transform.basis.z * machine.lunge_speed()
+		# 攻击期间锁死走跑。位移优先来自动画根运动（hips 轨道增量，本地空间），
+		# 剪辑无根位移（或编辑器测试里动画不推进）时按数据表前冲兜底。
+		var rm := Vector3.ZERO
+		if delta > 0.0:
+			rm = animation_player.get_root_motion_position()
+		if rm.length_squared() > 0.0000001:
+			velocity = global_transform.basis * rm / delta
+		else:
+			velocity = global_transform.basis.z * machine.lunge_speed()
 	else:
 		var move_input := Input.get_vector("left", "right", "up", "down")
 		var running := Input.is_action_pressed("shift")
@@ -97,6 +104,16 @@ func update_animation() -> void:
 func _on_phase_changed(new_phase: int) -> void:
 	if new_phase == CombatStateMachine.Phase.ACTIVE:
 		_hit_consumed = false
+	# 根运动只在动作期间抽取：hips 位移轨道改由物理体消化（防动画结束的闪现纠偏）；
+	# 自由态关闭抽取，走跑待机剪辑按原样播放（保留走路起伏）。
+	# 编辑器（含测试）不开：动画不推进，位移走数据表前冲兜底，保持测试确定性。
+	if Engine.is_editor_hint():
+		return
+	if new_phase == CombatStateMachine.Phase.FREE:
+		animation_player.root_motion_track = NodePath()
+	else:
+		animation_player.root_motion_track = NodePath("%GeneralSkeleton:Hips")
+		animation_player.root_motion_local = true
 
 
 ## 缝 B：判定段用 hitbox 形状对 hurtbox 层做物理空间查询，重叠即结算。
