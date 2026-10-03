@@ -3,7 +3,8 @@
 [ext_resource type="PackedScene" uid="uid://cppvnpsdycmqh" path="res://scene/player.tscn" id="1_player"]
 [ext_resource type="Script" uid="uid://bw4fko3db3la6" path="res://scripts/camera_rig.gd" id="2_camera"]
 [ext_resource type="PackedScene" path="res://scene/dummy.tscn" id="3_dummy"]
-[ext_resource type="Script" path="res://scripts/feedback.gd" id="4_feedback"]
+[ext_resource type="Script" uid="uid://cqf6c3epsbhx1" path="res://scripts/feedback.gd" id="4_feedback"]
+[ext_resource type="Script" uid="uid://dqdpj1o3ohc" path="res://scripts/patrol_marker.gd" id="5_0ha60"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -32,6 +33,14 @@ albedo_color = Color(0.85, 0.25, 0.2, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_z"]
 albedo_color = Color(0.2, 0.45, 0.9, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4j5ol"]
+albedo_color = Color(1, 0.8, 0.1, 1)
+emission_enabled = true
+emission = Color(0.7, 0.55, 0.05, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_p1hux"]
+size = Vector3(0.5, 0.5, 0.5)
 
 [node name="Main" type="Node3D" unique_id=676235167]
 
@@ -69,10 +78,10 @@ mesh = SubResource("BoxMesh_marker")
 
 [node name="Player" parent="." unique_id=1299013997 instance=ExtResource("1_player")]
 
-[node name="Dummy" parent="." instance=ExtResource("3_dummy")]
+[node name="Dummy" parent="." unique_id=1222816515 instance=ExtResource("3_dummy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
-[node name="Feedback" type="Node" parent="."]
+[node name="Feedback" type="Node" parent="." unique_id=960566911]
 script = ExtResource("4_feedback")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1970799189]
@@ -80,5 +89,11 @@ transform = Transform3D(1, 0, 0, 0, 0.57352, 0.8191916, 0, -0.8191916, 0.57352, 
 current = true
 script = ExtResource("2_camera")
 target_path = NodePath("../Player")
+
+[node name="PatrolMarker" type="MeshInstance3D" parent="." unique_id=539225953]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -2.5)
+material_override = SubResource("StandardMaterial3D_4j5ol")
+mesh = SubResource("BoxMesh_p1hux")
+script = ExtResource("5_0ha60")
 
 [connection signal="hit_landed" from="Player" to="Feedback" method="on_hit_landed"]

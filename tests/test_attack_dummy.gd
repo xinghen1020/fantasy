@@ -125,6 +125,7 @@ func test_whiff_does_no_damage() -> void:
 		player.update_animation()
 	assert_true(hit_info.is_empty(), "背对木桩挥空不应造成伤害")
 	assert_eq(_dummy().hp, _dummy().max_hp, "挥空后木桩血量应完好")
+	assert_eq(_feedback().last_hit_stop_duration, 0.0, "挥空不应触发顿帧（运动参照物应持续移动）")
 
 
 func test_attack_animation_plays_once_per_swing() -> void:

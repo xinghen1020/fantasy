@@ -22,3 +22,4 @@
 - 动画名修正：standard_2 库内实际为 `Sword_Regular_A`（小写 sword_regular_a 不存在）。该库还有 `Sword_Regular_A/B/C` 及各自 `_Rec` 后摇段、`Sword_Heavy_Combo`（票03 连段素材可用）；`standard/Roll` 可作票05 翻滚动画。
 - 手感观感（前摇/后摇时长、前冲距离、顿帧帧数是否成立）按票01 同口径，推迟到 08 最终试玩合并验证；数值本身是占位，届时改 move_table。
 - 2026-10-03 试玩反馈修复：①命中闪烁白→闪绿（dummy.gd）；②"点一下攻击两次、只有首次有命中效果"根因是 Sword_Regular_A 动画仅 0.43s（不循环）而整招 0.82s，update_animation 以 current_animation 变空误判为需要切换而重播第二遍挥砍（纯动画回放、无判定段）。修复为按意图动画去重（_anim_intent），并新增回归测试 test_attack_animation_plays_once_per_swing（15/15 绿）。0.43s 挥砍 vs 0.82s 招式窗口的节奏观感留给 08 调参（或 03 用 _Rec 动画补后摇）。
+- 2026-10-03 试玩反馈："挥空也像有顿帧"。实测排除全局顿帧误触发（game_eval 采样参照物：挥空 60 帧仅 1 帧端点折返停顿、无 hit_stop 记录；命中恰好 5 连停帧=0.08s 顿帧）。观感来源是挥砍动画（0.43s）播完后在后摇里的收招定格，属局部假象，节奏留给 08。新增 PatrolMarker 匀速往返方块（patrol_marker.gd，z=-2.5）作为顿帧参照物：真顿帧全局冻结它也停，假定格它照走。挥空测试补断言"挥空不触发顿帧"（15/15 绿）。
