@@ -23,7 +23,7 @@ func _ready() -> void:
 	_flash_material = StandardMaterial3D.new()
 	_flash_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_flash_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_flash_material.albedo_color = Color(1, 1, 1, 0.55)
+	_flash_material.albedo_color = Color(0.2, 1.0, 0.3, 0.55)
 
 
 func take_hit(damage: int) -> void:

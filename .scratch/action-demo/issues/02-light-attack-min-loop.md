@@ -21,3 +21,4 @@
 - 2026-10-03 实现完成，测试全绿（combat_rules 6 + attack_dummy 4 + player3d 回归 4）。缝A：`scripts/combat/{move_table,combat_state_machine}.gd` 纯逻辑模块；缝B：命中判定用 hitbox 形状直接空间查询（`intersect_shape`，collide_with_areas），保证编辑器内手动 tick 的判定确定性；顿帧由 main.tscn 的 Feedback 节点承接 `hit_landed` 信号，编辑器/测试环境只记录不动全局时间。
 - 动画名修正：standard_2 库内实际为 `Sword_Regular_A`（小写 sword_regular_a 不存在）。该库还有 `Sword_Regular_A/B/C` 及各自 `_Rec` 后摇段、`Sword_Heavy_Combo`（票03 连段素材可用）；`standard/Roll` 可作票05 翻滚动画。
 - 手感观感（前摇/后摇时长、前冲距离、顿帧帧数是否成立）按票01 同口径，推迟到 08 最终试玩合并验证；数值本身是占位，届时改 move_table。
+- 2026-10-03 试玩反馈修复：①命中闪烁白→闪绿（dummy.gd）；②"点一下攻击两次、只有首次有命中效果"根因是 Sword_Regular_A 动画仅 0.43s（不循环）而整招 0.82s，update_animation 以 current_animation 变空误判为需要切换而重播第二遍挥砍（纯动画回放、无判定段）。修复为按意图动画去重（_anim_intent），并新增回归测试 test_attack_animation_plays_once_per_swing（15/15 绿）。0.43s 挥砍 vs 0.82s 招式窗口的节奏观感留给 08 调参（或 03 用 _Rec 动画补后摇）。

@@ -125,3 +125,21 @@ func test_whiff_does_no_damage() -> void:
 		player.update_animation()
 	assert_true(hit_info.is_empty(), "背对木桩挥空不应造成伤害")
 	assert_eq(_dummy().hp, _dummy().max_hp, "挥空后木桩血量应完好")
+
+
+func test_attack_animation_plays_once_per_swing() -> void:
+	_spawn_arena()
+	_face_dummy()
+	var player := _player()
+	var attack_anim: String = MoveTable.MOVES[MoveTable.LIGHT_ATTACK_1]["animation"]
+	player.request_light_attack()
+	var plays := 0
+	var was_playing := false
+	for i in MAX_SWING_FRAMES:
+		player.tick(TICK)
+		player.update_animation()
+		var playing: bool = player.animation_player.current_animation == attack_anim
+		if playing and not was_playing:
+			plays += 1
+		was_playing = playing
+	assert_eq(plays, 1, "招式动画（0.43s）短于整招（0.82s），一次点击只应播放一遍，不可重播第二遍挥砍")

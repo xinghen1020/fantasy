@@ -25,6 +25,8 @@ var machine := CombatStateMachine.new()
 
 # 本次挥击是否已结算（一段判定只结算一次）
 var _hit_consumed := true
+# 当前意图动画；招式动画短于整招、播完（current_animation 变空）时靠它避免重播
+var _anim_intent := ""
 
 # 角色动画播放器（FBX 实例内部的 AnimationPlayer）
 @onready var animation_player: AnimationPlayer = $Model/AnimationPlayer
@@ -68,7 +70,8 @@ func tick(delta: float) -> void:
 	_resolve_hits()
 
 
-## 切换走路/跑步/待机/招式动画。招式动画按数据表播放。
+## 切换走路/跑步/待机/招式动画。按意图去重：招式动画（0.43s）短于整招（0.82s），
+## 非循环动画播完后 current_animation 变空，不能据此重播第二遍挥砍。
 func update_animation() -> void:
 	if animation_player == null:
 		return
@@ -77,8 +80,11 @@ func update_animation() -> void:
 		anim = machine.current_animation()
 	elif velocity.length_squared() > 0.01:
 		anim = ANIM_SPRINT if velocity.length() > WALK_SPEED + ANIM_SPEED_EPSILON else ANIM_WALK
-	if anim == "" or animation_player.current_animation == anim:
+	if anim == "":
 		return
+	if _anim_intent == anim:
+		return
+	_anim_intent = anim
 	animation_player.play(anim)
 
 
