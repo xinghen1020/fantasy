@@ -36,6 +36,34 @@ var _anim_intent := ""
 
 func _ready() -> void:
 	machine.phase_changed.connect(_on_phase_changed)
+	if not Engine.is_editor_hint():
+		_inplace_combat_animations()
+
+
+## 就地化战斗剪辑：剥掉挥砍/收招剪辑里烘焙的 hips 位移轨道（运行时一次性）。
+## 模型不再自带位移，攻击位移全权归数据表前冲，动画结束无"归位闪现"。
+## 只动 MOVES 表引用的 standard_2 剪辑；走跑待机剪辑保留原样（起伏不受影响）。
+func _inplace_combat_animations() -> void:
+	var lib := animation_player.get_animation_library("standard_2")
+	if lib == null:
+		return
+	for move: Dictionary in MoveTable.MOVES.values():
+		for key in ["animation", "recovery_animation"]:
+			var anim_name: String = move.get(key, "")
+			if anim_name == "" or not anim_name.begins_with("standard_2/"):
+				continue
+			var short_name := anim_name.get_slice("/", 1)
+			if not lib.has_animation(short_name):
+				continue
+			var src: Animation = lib.get_animation(short_name)
+			var stripped: Animation = src.duplicate()
+			for i in range(stripped.get_track_count() - 1, -1, -1):
+				if stripped.track_get_type(i) == Animation.TYPE_POSITION_3D \
+						and String(stripped.track_get_path(i)).contains("Hips"):
+					stripped.remove_track(i)
+			if stripped.get_track_count() != src.get_track_count():
+				lib.remove_animation(short_name)
+				lib.add_animation(short_name, stripped)
 
 
 func _physics_process(delta: float) -> void:
@@ -57,15 +85,9 @@ func request_light_attack() -> void:
 func tick(delta: float) -> void:
 	machine.tick(delta)
 	if machine.is_locked():
-		# 攻击期间锁死走跑。位移优先来自动画根运动（hips 轨道增量，本地空间），
-		# 剪辑无根位移（或编辑器测试里动画不推进）时按数据表前冲兜底。
-		var rm := Vector3.ZERO
-		if delta > 0.0:
-			rm = animation_player.get_root_motion_position()
-		if rm.length_squared() > 0.0000001:
-			velocity = global_transform.basis * rm / delta
-		else:
-			velocity = global_transform.basis.z * machine.lunge_speed()
+		# 攻击期间锁死走跑，位移由招式前冲沿面朝方向提供（用户故事 9）。
+		# 战斗剪辑已在 _ready 就地化（剥除 hips 位移轨），视觉与物理不会分离。
+		velocity = global_transform.basis.z * machine.lunge_speed()
 	else:
 		var move_input := Input.get_vector("left", "right", "up", "down")
 		var running := Input.is_action_pressed("shift")
@@ -104,16 +126,6 @@ func update_animation() -> void:
 func _on_phase_changed(new_phase: int) -> void:
 	if new_phase == CombatStateMachine.Phase.ACTIVE:
 		_hit_consumed = false
-	# 根运动只在动作期间抽取：hips 位移轨道改由物理体消化（防动画结束的闪现纠偏）；
-	# 自由态关闭抽取，走跑待机剪辑按原样播放（保留走路起伏）。
-	# 编辑器（含测试）不开：动画不推进，位移走数据表前冲兜底，保持测试确定性。
-	if Engine.is_editor_hint():
-		return
-	if new_phase == CombatStateMachine.Phase.FREE:
-		animation_player.root_motion_track = NodePath()
-	else:
-		animation_player.root_motion_track = NodePath("%GeneralSkeleton:Hips")
-		animation_player.root_motion_local = true
 
 
 ## 缝 B：判定段用 hitbox 形状对 hurtbox 层做物理空间查询，重叠即结算。
