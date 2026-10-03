@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" uid="uid://cppvnpsdycmqh" path="res://scene/player.tscn" id="1_player"]
 [ext_resource type="Script" uid="uid://bw4fko3db3la6" path="res://scripts/camera_rig.gd" id="2_camera"]
+[ext_resource type="PackedScene" path="res://scene/dummy.tscn" id="3_dummy"]
+[ext_resource type="Script" path="res://scripts/feedback.gd" id="4_feedback"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -67,8 +69,16 @@ mesh = SubResource("BoxMesh_marker")
 
 [node name="Player" parent="." unique_id=1299013997 instance=ExtResource("1_player")]
 
+[node name="Dummy" parent="." instance=ExtResource("3_dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="Feedback" type="Node" parent="."]
+script = ExtResource("4_feedback")
+
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1970799189]
 transform = Transform3D(1, 0, 0, 0, 0.57352, 0.8191916, 0, -0.8191916, 0.57352, 0, 9, 6.3)
 current = true
 script = ExtResource("2_camera")
 target_path = NodePath("../Player")
+
+[connection signal="hit_landed" from="Player" to="Feedback" method="on_hit_landed"]
