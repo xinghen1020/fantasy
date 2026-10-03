@@ -5,9 +5,9 @@ description: Grill the user relentlessly about a plan, decision, or idea. Use wh
 
 Interview the user relentlessly until you reach a shared understanding. Map this as a **design tree**: every decision branches into the decisions that hang off it.
 
-Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round: number each question and give your recommended answer. Then wait for the user's answers before the next round.
+Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round, each question carrying your recommended answer. Then wait for the user's answers before the next round.
 
-Format a round like so:
+**Ask through the AskUserQuestion tool**: each frontier question becomes one AskUserQuestion question with selectable options, the recommended answer as the first option labeled "（推荐）". A frontier larger than four questions means successive AskUserQuestion calls within the same round. Use the plain-text format below only when AskUserQuestion is unavailable (for example when running as a subagent):
 
 ```
 ❓ **Q1** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
